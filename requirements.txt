@@ -1,4 +1,4 @@
-numpy
-pandas
-cython
-gensim
+numpy==1.21.4
+pandas==1.3.4
+cython==0.29.24
+gensim==4.1.2
