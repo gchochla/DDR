@@ -1,16 +1,12 @@
-from __future__ import division
+__author__ = "Joe Hoover"
 
-__author__ = 'Joe Hoover'
-
-import sys
 import numpy as np
-from load_terms import get_files
-import os
-import collections
 import csv
-from file_length import file_len
 import pandas as pd
-from simple_progress_bar import update_progress
+
+from ddr.file_length import file_len
+from ddr.simple_progress_bar import update_progress
+from ddr.load_terms import get_files
 
 
 def make_agg_vec(words, model, num_features, model_word_set, filter_out=[]):
@@ -18,13 +14,15 @@ def make_agg_vec(words, model, num_features, model_word_set, filter_out=[]):
 
     feature_vec = np.zeros((num_features,), dtype="float32")
 
-    nwords = 0.
+    nwords = 0
 
     for word in words:
         if word not in filter_out:
             if word in model_word_set:
                 nwords += 1
                 feature_vec = np.add(feature_vec, model[word])
+            else:
+                print(f"{word} not in vocabulary")
 
     avg_feature_vec = feature_vec / nwords
 
@@ -32,7 +30,7 @@ def make_agg_vec(words, model, num_features, model_word_set, filter_out=[]):
 
 
 def dic_vecs(dic_terms, model, num_features, model_word_set, filter_out=[]):
-    '''
+    """
 
     :param dic_terms: Dictionary where keys are dimension names and values are terms.
     :param model: word2vec model
@@ -41,29 +39,45 @@ def dic_vecs(dic_terms, model, num_features, model_word_set, filter_out=[]):
     :param filter_out: Words to exclude from aggregation
     :return: A dictionary where keys are dimension names and values the latent semantic space
      representing that dimension. len(values) will equal num_features.
-    '''
-    agg_dic_vecs = collections.OrderedDict()
-    for k in dic_terms.iterkeys():
-        agg_dic_vecs[k] = make_agg_vec(dic_terms[k], model = model, num_features = num_features,
-                                         model_word_set = model_word_set, filter_out = filter_out)
+    """
+    agg_dic_vecs = dict()
+    for k in dic_terms:
+        agg_dic_vecs[k] = make_agg_vec(
+            dic_terms[k],
+            model=model,
+            num_features=num_features,
+            model_word_set=model_word_set,
+            filter_out=filter_out,
+        )
 
     return agg_dic_vecs
 
-def write_dic_vecs(dic_vecs, output_path, delimiter='\t'):
-    '''
+
+def write_dic_vecs(dic_vecs, output_path, delimiter="\t"):
+    """
 
     :param dic_vecs: Dictionary of term dictionary representations (e.g. as created by dic_vecs()
     :param output_path: File to write to
     :param delimiter: Delimiter for column sep in output file
     :return: None
-    '''
-    dic_vecs = pd.DataFrame.from_dict(dic_vecs, orient='columns')
+    """
+    dic_vecs = pd.DataFrame.from_dict(dic_vecs, orient="columns")
     dic_vecs.to_csv(output_path, sep=delimiter, index=False)
 
 
-def doc_vecs_from_csv(input_path, output_path, model, num_features, model_word_set, text_col, delimiter, filter_out=[],
-                  quotechar=None,
-                  id_col=False, header=True):
+def doc_vecs_from_csv(
+    input_path,
+    output_path,
+    model,
+    num_features,
+    model_word_set,
+    text_col,
+    delimiter,
+    filter_out=[],
+    quotechar=None,
+    id_col=False,
+    header=True,
+):
     """
     Create a distributed representation of each document in a column of documents
     contained in the input file. These representations are written to the file
@@ -90,13 +104,12 @@ def doc_vecs_from_csv(input_path, output_path, model, num_features, model_word_s
     object is returned.
     """
 
-    with open(input_path, 'rb') as docs_file, open(output_path, 'wb') as out_file:
+    with open(input_path, "r") as docs_file, open(output_path, "w") as out_file:
 
         docs = csv.reader(docs_file, delimiter=delimiter, quotechar=quotechar)
 
         if header is True:
-            header = docs.next()
-            print(header)
+            header = next(docs)
 
             if id_col is not False:
                 try:
@@ -105,7 +118,11 @@ def doc_vecs_from_csv(input_path, output_path, model, num_features, model_word_s
                     try:
                         id_col = int(id_col)
                     except ValueError:
-                        print("ValueError: Column '{0}' not found, please make sure that the name or index was correctly listed".format(id_col))
+                        print(
+                            f"ValueError: Column '{id_col}' not found, "
+                            "please make sure that the name or index"
+                            " was correctly listed"
+                        )
 
             try:
                 print(text_col)
@@ -114,21 +131,33 @@ def doc_vecs_from_csv(input_path, output_path, model, num_features, model_word_s
                 try:
                     text_col = int(text_col)
                 except ValueError:
-                    print("ValueError: Column '{0}' not found, please make sure that the name or index was correctly listed".format(text_col))
+                    print(
+                        "ValueError: Column '{0}' not found, please make sure that the name or index was correctly listed".format(
+                            text_col
+                        )
+                    )
 
         if header is False:
             if id_col is not False:
                 try:
                     id_col = int(id_col)
                 except ValueError:
-                    print("ValueError: Column '{0}' not found, please make sure that the index was correctly listed".format(id_col))
+                    print(
+                        "ValueError: Column '{0}' not found, please make sure that the index was correctly listed".format(
+                            id_col
+                        )
+                    )
 
             try:
                 text_col = int(text_col)
             except ValueError:
-                print("ValueError: Column '{0}' not found, please make sure that the index was correctly listed".format(text_col))
+                print(
+                    "ValueError: Column '{0}' not found, please make sure that the index was correctly listed".format(
+                        text_col
+                    )
+                )
 
-        fieldnames = ['ID'] + [unicode(fnum) for fnum in range(1, num_features + 1)]
+        fieldnames = ["ID"] + [str(fnum) for fnum in range(1, num_features + 1)]
         writer = csv.writer(out_file, delimiter=delimiter, quotechar=quotechar)
         writer.writerow(fieldnames)
 
@@ -136,7 +165,11 @@ def doc_vecs_from_csv(input_path, output_path, model, num_features, model_word_s
         print(n_lines)
         n_na = 0
 
-        print('Generating aggregate distributed representations of', n_lines, 'texts.')
+        print(
+            "Generating aggregate distributed representations of",
+            n_lines,
+            "texts.",
+        )
         update_progress(0 / (n_lines - 1))
 
         prog_counter = 0
@@ -152,7 +185,13 @@ def doc_vecs_from_csv(input_path, output_path, model, num_features, model_word_s
                     counter += 1
 
                     doc = row[text_col].split()
-                    cur_agg_vec = make_agg_vec(words=doc, model=model, num_features=num_features, model_word_set=model_word_set, filter_out=[])
+                    cur_agg_vec = make_agg_vec(
+                        words=doc,
+                        model=model,
+                        num_features=num_features,
+                        model_word_set=model_word_set,
+                        filter_out=[],
+                    )
                     writer.writerow([cur_id] + list(cur_agg_vec))
 
                     if prog_counter >= 0.05 * n_lines:
@@ -167,9 +206,15 @@ def doc_vecs_from_csv(input_path, output_path, model, num_features, model_word_s
             for row in docs:
                 prog_counter += 1
                 counter += 1
-                
+
                 doc = row[text_col].split()
-                cur_agg_vec = make_agg_vec(words=doc, model=model, num_features=num_features, model_word_set=model_word_set, filter_out = [])
+                cur_agg_vec = make_agg_vec(
+                    words=doc,
+                    model=model,
+                    num_features=num_features,
+                    model_word_set=model_word_set,
+                    filter_out=[],
+                )
 
                 writer.writerow([row[id_col]] + list(cur_agg_vec))
 
@@ -177,12 +222,23 @@ def doc_vecs_from_csv(input_path, output_path, model, num_features, model_word_s
                     prog_counter = 0
                     update_progress(counter / (n_lines - 1))
 
-            print("\nFinished calculating aggregate document representations", "\nNumber NA:", n_na)
+            print(
+                "\nFinished calculating aggregate document representations",
+                "\nNumber NA:",
+                n_na,
+            )
 
 
-
-def doc_vecs_from_txt(input_path, output_path, num_features, model, model_word_set, delimiter='\t', filter_out = []):
-    '''
+def doc_vecs_from_txt(
+    input_path,
+    output_path,
+    num_features,
+    model,
+    model_word_set,
+    delimiter="\t",
+    filter_out=[],
+):
+    """
 
     :param input_path: Path to text file(s) containing texts to be represented.
     This can be a single file or a directory containing multiple files.
@@ -193,23 +249,27 @@ def doc_vecs_from_txt(input_path, output_path, num_features, model, model_word_s
     :param filter_out: words to be excluded from the representation from
     :return: None. None. This function iteratively writes each document representation to file, no
     object is returned.
-    '''
+    """
 
     path_info = get_files(input_path=input_path)
 
-    with open(output_path, 'wb') as out_file:
+    with open(output_path, "wb") as out_file:
 
-        fieldnames = ['ID'] + [unicode(fnum) for fnum in range(1, num_features + 1)]
+        fieldnames = ["ID"] + [str(fnum) for fnum in range(1, num_features + 1)]
         writer = csv.writer(out_file, delimiter=delimiter)
         writer.writerow(fieldnames)
 
         for input_path in path_info.itervalues():
 
-            with open(input_path, 'rb') as docs:
+            with open(input_path, "rb") as docs:
 
                 n_lines = float(file_len(input_path))
 
-                print('Generating aggregate distributed representations of', n_lines, 'texts.')
+                print(
+                    "Generating aggregate distributed representations of",
+                    n_lines,
+                    "texts.",
+                )
                 update_progress(0 / (n_lines - 1))
 
                 prog_counter = 0
@@ -225,8 +285,13 @@ def doc_vecs_from_txt(input_path, output_path, num_features, model, model_word_s
                         prog_counter += 1
                         counter += 1
                         row = row[0].split()
-                        cur_agg_vec = make_agg_vec(words=row, model=model, num_features=num_features,
-                                                   model_word_set=model_word_set, filter_out=[])
+                        cur_agg_vec = make_agg_vec(
+                            words=row,
+                            model=model,
+                            num_features=num_features,
+                            model_word_set=model_word_set,
+                            filter_out=[],
+                        )
                         writer.writerow([cur_id] + list(cur_agg_vec))
 
                         if prog_counter >= 0.05 * n_lines:
@@ -237,7 +302,8 @@ def doc_vecs_from_txt(input_path, output_path, num_features, model, model_word_s
 
                         n_na += 1
                         pass
-                print("\nFinished calculating aggregate document representations", "\nNumber of NA:", n_na)
-
-
-
+                print(
+                    "\nFinished calculating aggregate document representations",
+                    "\nNumber of NA:",
+                    n_na,
+                )

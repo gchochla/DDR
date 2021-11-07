@@ -1,5 +1,3 @@
-from __future__ import division
-
 """
 NAME
     ddr - This package contains interfaces and functionality to compute pair-wise document-dictionary
