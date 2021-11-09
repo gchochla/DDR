@@ -104,7 +104,9 @@ def doc_vecs_from_csv(
     object is returned.
     """
 
-    with open(input_path, "r") as docs_file, open(output_path, "w") as out_file:
+    with open(input_path, encoding="utf8") as docs_file, open(
+        output_path, "w", encoding="utf8"
+    ) as out_file:
 
         docs = csv.reader(docs_file, delimiter=delimiter, quotechar=quotechar)
 

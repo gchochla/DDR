@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ddr",
-    version="0.2",
+    version="0.2.1",
     description="Functions for implementing and exploring Distributed Dictionary Representation",
     author="Joe Hoover, Georgios Chochlakis",
     author_email="jehoover@usc.edu, chochlak@usc.edu",
