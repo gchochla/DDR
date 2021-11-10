@@ -45,7 +45,7 @@ def get_loadings(
     nan_counter = {"ID": [], "count": 0}
 
     with open(agg_doc_vecs_path, "r") as doc_vecs, open(
-        out_path, "w"
+        out_path, "w", newline=""
     ) as out_file:
 
         doc_vecs_reader = csv.reader(doc_vecs, delimiter=",")

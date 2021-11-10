@@ -105,7 +105,7 @@ def doc_vecs_from_csv(
     """
 
     with open(input_path, encoding="utf8") as docs_file, open(
-        output_path, "w", encoding="utf8"
+        output_path, "w", encoding="utf8", newline=""
     ) as out_file:
 
         docs = csv.reader(docs_file, delimiter=delimiter, quotechar=quotechar)
